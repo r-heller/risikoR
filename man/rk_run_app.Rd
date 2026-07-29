@@ -17,7 +17,7 @@ application.
 Starts the bundled 'shiny' application: four tabs for playing a game against
 the AI agents on a clickable map, analysing a single dice duel, simulating
 battles against the exact solution, and running strategy tournaments.
-Requires the \code{Suggests} packages the app uses (\code{shiny}, \code{bslib}, \code{plotly}).
+Requires the \code{Suggests} packages the app uses (\code{shiny} and \code{bslib}).
 }
 \examples{
 \dontrun{

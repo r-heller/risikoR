@@ -5,7 +5,3 @@
 .DS_Store
 docs/
 inst/doc/
-
-# orchestration / build prompts - not part of the package
-.orchestration/
-CLAUDE_CODE_*.md

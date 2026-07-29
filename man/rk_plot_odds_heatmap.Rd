@@ -28,7 +28,8 @@ A \code{ggplot} object.
 }
 \description{
 Draws \code{\link[=rk_odds_table]{rk_odds_table()}} as a tile heatmap: attacker armies on one axis,
-defender armies on the other, conquest probability as fill.
+defender armies on the other, conquest probability as fill. The stepped
+line traces where the odds pass even.
 }
 \examples{
 rk_plot_odds_heatmap(att_range = 2:10, def_range = 1:10)

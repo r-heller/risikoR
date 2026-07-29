@@ -10,10 +10,12 @@ test_that("the app ships every file it needs", {
   dir <- app_dir()
   expect_true(file.exists(file.path(dir, "app.R")))
   expect_true(file.exists(file.path(dir, "www", "logo.png")))
+  expect_true(file.exists(file.path(dir, "www", "risikoR.css")))
   modules <- list.files(file.path(dir, "modules"), pattern = "[.]R$")
   expect_setequal(
     modules,
-    c("mod_battle.R", "mod_duel.R", "mod_play.R", "mod_strategy.R")
+    c("mod_battle.R", "mod_duel.R", "mod_play.R", "mod_strategy.R",
+      "shared.R")
   )
 })
 
@@ -46,7 +48,6 @@ test_that("rk_run_app explains a missing dependency", {
 test_that("the app object can be built", {
   skip_if_not_installed("shiny")
   skip_if_not_installed("bslib")
-  skip_if_not_installed("plotly")
   dir <- app_dir()
   withr::local_dir(dir)
   app <- source("app.R", local = new.env())$value

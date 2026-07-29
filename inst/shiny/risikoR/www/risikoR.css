@@ -1,0 +1,284 @@
+/* risikoR app styling. One accent, one ink scale, one set of panel shapes, so
+   the app reads as part of the same suite as the plots it draws. */
+
+:root {
+  --rk-accent: #5e2c8e;
+  --rk-accent-soft: #f3eefa;
+  --rk-ink: #1b1b1f;
+  --rk-ink-mid: #5a5f66;
+  --rk-ink-soft: #8a9099;
+  --rk-rule: #e3e5e9;
+  --rk-ocean: #edf2f6;
+}
+
+body {
+  background: #fbfbfc;
+  color: var(--rk-ink);
+}
+
+/* ---- navbar --------------------------------------------------------------- */
+
+.navbar {
+  background: #ffffff !important;
+  border-bottom: 1px solid var(--rk-rule);
+  box-shadow: 0 1px 2px rgba(27, 27, 31, 0.04);
+}
+
+.navbar .navbar-brand {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--rk-ink) !important;
+}
+
+.navbar .nav-link {
+  color: var(--rk-ink-mid) !important;
+  font-weight: 500;
+  padding-inline: 0.85rem !important;
+}
+
+.navbar .nav-link:hover {
+  color: var(--rk-accent) !important;
+}
+
+.navbar .nav-link.active {
+  color: var(--rk-accent) !important;
+  box-shadow: inset 0 -2px 0 var(--rk-accent);
+}
+
+/* ---- sidebar -------------------------------------------------------------- */
+
+.sidebar {
+  background: #ffffff !important;
+  border-right: 1px solid var(--rk-rule) !important;
+}
+
+.rk-group {
+  margin: 0 0 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--rk-ink-soft);
+}
+
+.rk-group:not(:first-child) {
+  margin-top: 1.5rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--rk-rule);
+}
+
+.sidebar .form-label,
+.sidebar label {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--rk-ink-mid);
+  margin-bottom: 0.25rem;
+}
+
+.sidebar .form-control,
+.sidebar .form-select {
+  border-color: var(--rk-rule);
+  font-size: 0.9rem;
+}
+
+.sidebar .form-control:focus,
+.sidebar .form-select:focus {
+  border-color: var(--rk-accent);
+  box-shadow: 0 0 0 3px var(--rk-accent-soft);
+}
+
+.sidebar .btn-primary {
+  background: var(--rk-accent);
+  border-color: var(--rk-accent);
+  font-weight: 600;
+  width: 100%;
+}
+
+.sidebar .btn-primary:hover {
+  background: #4b2372;
+  border-color: #4b2372;
+}
+
+.sidebar .btn-outline-secondary {
+  border-color: var(--rk-rule);
+  color: var(--rk-ink-mid);
+  font-weight: 500;
+  width: 100%;
+}
+
+.sidebar .btn-outline-secondary:hover {
+  background: var(--rk-accent-soft);
+  border-color: var(--rk-accent);
+  color: var(--rk-accent);
+}
+
+.rk-hint {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--rk-ink-soft);
+}
+
+/* ---- panels --------------------------------------------------------------- */
+
+.rk-panel {
+  background: #ffffff;
+  border: 1px solid var(--rk-rule);
+  border-radius: 10px;
+  margin-bottom: 1.15rem;
+  overflow: hidden;
+}
+
+.rk-panel > .rk-panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--rk-rule);
+  background: #fcfcfd;
+}
+
+.rk-panel-title {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--rk-ink);
+}
+
+.rk-panel-note {
+  font-size: 0.8rem;
+  color: var(--rk-ink-soft);
+}
+
+.rk-panel > .rk-panel-body {
+  padding: 0.9rem 1rem 1rem;
+}
+
+/* A plot container whose width is capped, so a fixed pixel height gives the
+   aspect ratio the plot was designed for instead of a letterboxed strip. */
+.rk-figure {
+  margin-inline: auto;
+}
+
+/* ---- status pills --------------------------------------------------------- */
+
+.rk-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.15rem;
+}
+
+.rk-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.32rem 0.7rem;
+  border: 1px solid var(--rk-rule);
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 0.86rem;
+  line-height: 1.2;
+}
+
+.rk-pill-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--rk-ink-soft);
+}
+
+.rk-pill-value {
+  font-weight: 600;
+  color: var(--rk-ink);
+}
+
+.rk-pill.rk-accent {
+  border-color: var(--rk-accent);
+  background: var(--rk-accent-soft);
+}
+
+.rk-pill.rk-accent .rk-pill-value {
+  color: var(--rk-accent);
+}
+
+.rk-pill.rk-win {
+  border-color: #009e73;
+  background: #eafaf4;
+}
+
+.rk-pill.rk-win .rk-pill-value {
+  color: #00694d;
+}
+
+.rk-swatch {
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 3px;
+  align-self: center;
+}
+
+/* ---- tables --------------------------------------------------------------- */
+
+.rk-panel table {
+  width: 100%;
+  margin: 0;
+  font-size: 0.88rem;
+  border-collapse: collapse;
+}
+
+.rk-panel table th {
+  padding: 0.3rem 0.65rem 0.45rem;
+  border-bottom: 1px solid var(--rk-ink-soft);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--rk-ink-mid);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.rk-panel table td {
+  padding: 0.38rem 0.65rem;
+  border-bottom: 1px solid var(--rk-rule);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.rk-panel table th:first-child,
+.rk-panel table td:first-child {
+  text-align: left;
+}
+
+.rk-panel table tr:last-child td {
+  border-bottom: none;
+}
+
+.rk-player {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+}
+
+/* ---- battle log ----------------------------------------------------------- */
+
+.rk-log {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  background: var(--rk-ocean);
+  border-radius: 7px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--rk-ink-mid);
+  white-space: pre-wrap;
+  min-height: 6.5rem;
+}
+
+.rk-note {
+  font-size: 0.86rem;
+  color: var(--rk-ink-mid);
+  margin: 0 0 0.9rem;
+}

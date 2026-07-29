@@ -57,3 +57,66 @@ test_that("tournament results plot", {
   expect_error(rk_plot_tournament(out[, 1:2]), "Missing column")
   expect_error(rk_plot_tournament("results"), "rk_tournament")
 })
+
+test_that("the drawn board agrees with the adjacency graph", {
+  # The map is only honest if the borders it draws are the borders the game
+  # engine will let you attack across. Two links on the world board are drawn
+  # as routes instead: Alaska - Kamchatka wraps round the far side, and
+  # East Africa - Middle East is a water crossing.
+  map <- rk_world()
+  board <- risikoR:::.rk_board(map)
+  edges <- risikoR:::.rk_cell_edges(board$tiles, board$cells)
+  shared <- edges$id %in% edges$id[duplicated(edges$id)]
+  same <- duplicated(paste(edges$id, edges$territory)) |
+    duplicated(paste(edges$id, edges$territory), fromLast = TRUE)
+  between <- edges[shared & !same, ]
+  drawn <- unique(vapply(
+    split(between$territory, between$id),
+    function(z) paste(sort(unique(z)), collapse = " - "),
+    character(1L)
+  ))
+
+  links <- risikoR:::.rk_links(map)
+  wanted <- paste(pmin(links$from, links$to), pmax(links$from, links$to),
+                  sep = " - ")
+  as_routes <- c("Alaska - Kamchatka", "East_Africa - Middle_East")
+
+  expect_setequal(setdiff(wanted, drawn), as_routes)
+  expect_setequal(setdiff(drawn, wanted), character(0))
+
+  # Every route the plot draws must be one of those two, and both must be there.
+  expect_equal(length(unique(board$routes$id)), 1L)
+  expect_equal(length(unique(board$wraps$id)), 2L)
+})
+
+test_that("every border is wide enough to see", {
+  board <- risikoR:::.rk_board(rk_world())
+  edges <- risikoR:::.rk_cell_edges(board$tiles, board$cells)
+  shared <- edges$id %in% edges$id[duplicated(edges$id)]
+  same <- duplicated(paste(edges$id, edges$territory)) |
+    duplicated(paste(edges$id, edges$territory), fromLast = TRUE)
+  between <- edges[shared & !same, ]
+  widths <- table(vapply(
+    split(between$territory, between$id),
+    function(z) paste(sort(unique(z)), collapse = " - "),
+    character(1L)
+  ))
+  expect_gte(min(widths), 3L)
+})
+
+test_that("continent labels sit nearest their own continent", {
+  board <- risikoR:::.rk_board(rk_world())
+  labels <- board$labels
+  expect_equal(nrow(labels), 6L)
+  nearest <- risikoR:::.rk_nearest_land(labels$x, labels$y, board$cells)
+  expect_equal(nearest$continent, labels$continent)
+})
+
+test_that("labels shrink to fit a narrow territory", {
+  size <- risikoR:::.rk_fit_size(
+    c("Madagascar", "Peru", "Congo"), span = c(4, 9, 9), size = 2.4
+  )
+  expect_lt(size[[1L]], size[[2L]])
+  expect_lte(max(size), 2.4)
+  expect_gte(min(size), 2.4 * 0.66)
+})

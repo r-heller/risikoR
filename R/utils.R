@@ -119,6 +119,32 @@
   rep(base, length.out = n)
 }
 
+# Players are usually named after colours. Honour that where we can -- a
+# player called "Red" drawn in blue is needlessly confusing -- while staying
+# inside the Okabe-Ito palette. Anything else takes the next unused entry.
+.rk_player_colours <- function(players) {
+  named <- c(
+    red = "#D55E00", vermillion = "#D55E00",
+    blue = "#0072B2", navy = "#0072B2",
+    green = "#009E73", teal = "#009E73",
+    yellow = "#F0E442", gold = "#F0E442",
+    orange = "#E69F00", amber = "#E69F00",
+    pink = "#CC79A7", magenta = "#CC79A7", purple = "#5E2C8E",
+    violet = "#5E2C8E", cyan = "#56B4E9", sky = "#56B4E9",
+    grey = "#7A7A7A", gray = "#7A7A7A", black = "#4D4D4D"
+  )
+  out <- unname(named[tolower(players)])
+  spare <- setdiff(.rk_palette(8L), out[!is.na(out)])
+  spare <- rep(c(spare, .rk_palette(8L)), length.out = length(players) + 8L)
+  for (i in seq_along(out)) {
+    if (is.na(out[[i]]) || out[[i]] %in% out[seq_len(i - 1L)]) {
+      out[[i]] <- spare[[1L]]
+      spare <- spare[-1L]
+    }
+  }
+  stats::setNames(out, players)
+}
+
 # Fixed continent colours, also Okabe-Ito derived.
 .rk_continent_colours <- function() {
   c(

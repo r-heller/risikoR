@@ -3,7 +3,7 @@
 #' Starts the bundled 'shiny' application: four tabs for playing a game against
 #' the AI agents on a clickable map, analysing a single dice duel, simulating
 #' battles against the exact solution, and running strategy tournaments.
-#' Requires the `Suggests` packages the app uses (`shiny`, `bslib`, `plotly`).
+#' Requires the `Suggests` packages the app uses (`shiny` and `bslib`).
 #'
 #' @param ... Passed to [shiny::runApp()].
 #'
@@ -17,7 +17,7 @@
 #' rk_run_app()
 #' }
 rk_run_app <- function(...) {
-  for (pkg in c("shiny", "bslib", "plotly")) {
+  for (pkg in c("shiny", "bslib")) {
     if (!.rk_has_package(pkg)) {
       cli::cli_abort(c(
         "Package {.pkg {pkg}} is required to run the app.",

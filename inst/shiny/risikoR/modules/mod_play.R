@@ -4,7 +4,8 @@ mod_play_ui <- function(id) {
   ns <- shiny::NS(id)
   bslib::layout_sidebar(
     sidebar = bslib::sidebar(
-      width = 300,
+      width = 288,
+      rk_group("New game"),
       shiny::selectInput(
         ns("n_players"), "Players",
         choices = c(2, 3, 4), selected = 3
@@ -15,24 +16,31 @@ mod_play_ui <- function(id) {
         selected = "aggressive"
       ),
       shiny::numericInput(ns("seed"), "Seed", value = 1, min = 1, step = 1),
-      shiny::actionButton(ns("new_game"), "New game", class = "btn-primary"),
-      shiny::hr(),
-      shiny::actionButton(ns("end_turn"), "End turn"),
-      shiny::actionButton(ns("clear"), "Clear selection"),
-      shiny::hr(),
+      shiny::actionButton(ns("new_game"), "Deal a new board",
+                          class = "btn-primary"),
+      rk_group("Your turn"),
+      shiny::actionButton(ns("end_turn"), "End turn",
+                          class = "btn-outline-secondary"),
+      shiny::actionButton(ns("clear"), "Clear selection",
+                          class = "btn-outline-secondary"),
+      rk_group("Board"),
       shiny::checkboxInput(ns("labels"), "Territory names", value = TRUE),
-      shiny::helpText(
-        "You play Red. Click your territories to place reinforcements, ",
-        "then click one of your territories and a neighbour to attack or ",
-        "to move armies."
+      rk_hint(
+        "You play Red. Click your territories to place reinforcements, then ",
+        "click one of your own and a neighbour to attack it or to move ",
+        "armies there."
       )
     ),
-    shiny::uiOutput(ns("banner")),
-    shiny::plotOutput(ns("map"), click = ns("map_click"), height = "540px"),
+    shiny::uiOutput(ns("status")),
+    rk_panel(
+      "The board",
+      note = "Click a territory to act on it",
+      rk_map_figure(ns("map"), ns("map_click"), width_mm = 244, height_mm = 173)
+    ),
     bslib::layout_columns(
       col_widths = c(7, 5),
-      shiny::tableOutput(ns("standings")),
-      shiny::verbatimTextOutput(ns("battle"))
+      rk_panel("Standings", shiny::uiOutput(ns("standings"))),
+      rk_panel("Message and last battle", shiny::uiOutput(ns("battle")))
     )
   )
 }
@@ -108,41 +116,66 @@ mod_play_server <- function(id, state) {
         risikoR::rk_plot_map(state$game, labels = isTRUE(input$labels)),
         error = function(e) NULL
       )
-    })
+    }, res = RK_RES)
 
-    output$standings <- shiny::renderTable({
+    output$standings <- shiny::renderUI({
       shiny::req(state$game)
-      summary(state$game)
+      standings <- as.data.frame(summary(state$game))
+      standings <- standings[order(-standings$territories), ]
+      standings$alive <- ifelse(standings$alive, "in play", "out")
+      rk_table(
+        standings,
+        labels = c(
+          player = "player", territories = "territories", armies = "armies",
+          continents = "continents", reinforcements = "next reinforcements",
+          alive = "status"
+        ),
+        first_is_player = TRUE
+      )
     })
 
-    output$battle <- shiny::renderText({
+    output$battle <- shiny::renderUI({
       shiny::req(state$game)
       battle <- state$game$last_battle
-      lines <- if (battle$rounds > 0L) format(battle) else "No battle yet."
-      paste(c(state$message, "", lines), collapse = "\n")
+      lines <- if (battle$rounds > 0L) {
+        format(battle)
+      } else {
+        "No battle fought yet."
+      }
+      shiny::tagList(
+        shiny::p(class = "rk-note", state$message),
+        shiny::pre(class = "rk-log", paste(lines, collapse = "\n"))
+      )
     })
 
-    output$banner <- shiny::renderUI({
+    output$status <- shiny::renderUI({
       shiny::req(state$game)
       game <- state$game
       if (risikoR::rk_is_winner(game)) {
-        return(shiny::div(
-          class = "alert alert-success",
-          shiny::strong(risikoR::rk_winner(game)), " has conquered the world."
+        winner <- risikoR::rk_winner(game)
+        return(rk_status(
+          rk_pill("round", game$round),
+          rk_pill("winner", winner, tone = "rk-win",
+                  colour = rk_player_colour(winner)),
+          rk_pill("armies", sum(risikoR::rk_armies(
+            game, risikoR::rk_territories(game, winner)
+          )))
         ))
       }
       left <- rk_armies_left(game, state$pending, human)
-      shiny::div(
-        class = "alert alert-secondary",
-        shiny::strong(game$turn), " to move ",
-        shiny::tags$span(class = "text-muted", paste0("(", game$phase, " phase)")),
+      rk_status(
+        rk_pill("round", game$round),
+        rk_pill("to move", game$turn, tone = "rk-accent",
+                colour = rk_player_colour(game$turn)),
+        rk_pill("phase", game$phase),
         if (identical(game$turn, human) && identical(game$phase, "reinforce")) {
-          paste0(" — ", left, " armies left to place")
-        } else if (!is.na(state$selected)) {
-          paste0(" — selected: ", state$selected)
-        } else {
-          ""
-        }
+          rk_pill("left to place", left)
+        },
+        if (!is.na(state$selected)) {
+          rk_pill("selected", gsub("_", " ", state$selected))
+        },
+        rk_pill("your territories", length(risikoR::rk_territories(game, human)),
+                colour = rk_player_colour(human))
       )
     })
   })
@@ -151,13 +184,20 @@ mod_play_server <- function(id, state) {
 # --- helpers ---------------------------------------------------------------
 
 # The territory whose layout position is closest to a click, or NA when the
-# click landed far from every territory.
-rk_nearest_territory <- function(layout, x, y, tol = 6) {
+# click landed in open water. The map claims each patch of ground for the
+# nearest layout position, so nearest-position is exactly the territory drawn
+# under the cursor; the tolerance only decides how far offshore still counts,
+# and is scaled off the board's own spacing rather than hard-coded.
+rk_nearest_territory <- function(layout, x, y) {
   if (is.null(x) || is.null(y)) {
     return(NA_character_)
   }
   d <- sqrt((layout$x - x)^2 + (layout$y - y)^2)
-  if (min(d) > tol) {
+  spacing <- stats::median(apply(
+    as.matrix(stats::dist(cbind(layout$x, layout$y))), 1L,
+    function(z) min(z[z > 0])
+  ))
+  if (min(d) > 0.65 * spacing) {
     return(NA_character_)
   }
   layout$territory[[which.min(d)]]

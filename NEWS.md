@@ -40,12 +40,18 @@
 
 ### Visualisation
 
-* `rk_plot_map()`: the board coloured by owner or by continent.
+* `rk_plot_map()`: the board drawn as tiled landmasses grouped into continents,
+  coloured by owner or by continent, with army counts on chips and the two
+  links that cannot be shared borders drawn as a sea route and as stubs at the
+  board edge. The layout is solved so that the borders on the picture are
+  exactly the borders `rk_neighbors()` reports, and a test enforces it.
 * `rk_plot_duel()`, `rk_plot_conquest()`, `rk_plot_odds_heatmap()`,
   `rk_plot_tournament()`.
 * `autoplot()` methods for `rk_game` and `rk_battle`.
+* One shared theme and one colourblind-safe palette across every plot, so a
+  player called "Red" is drawn red and continents keep their colours.
 
 ### Application
 
-* `rk_run_app()`: a four-tab Shiny app — play, duel analyser, battle simulator
+* `rk_run_app()`: a four-tab Shiny app -- play, duel analyser, battle simulator
   and strategy lab.

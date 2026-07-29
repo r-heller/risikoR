@@ -23,14 +23,16 @@ Depends:
 Imports:
     cli,
     ggplot2,
+    grDevices,
+    grid,
     rlang,
+    stats,
     tibble,
     utils
 Suggests:
     bslib,
     covr,
     knitr,
-    plotly,
     rmarkdown,
     shiny,
     testthat (>= 3.0.0),

@@ -18,9 +18,18 @@ to an \code{rk_game}.}
 A \code{ggplot} object.
 }
 \description{
-Draws the board: adjacency as segments, territories as points labelled with
-their army count. An \code{rk_game} is coloured by owner, a bare \code{rk_map} by
-continent.
+Draws the board. Territories are tiled landmasses grouped into continents,
+borders between neighbours are drawn as lines on the ground and neighbours
+that only meet across water are joined by a dashed sea route. An \code{rk_game}
+is coloured by owner and each territory carries its army count; a bare
+\code{rk_map} is coloured by continent.
+}
+\details{
+Forty-two named territories need room. The board is laid out for a canvas of
+roughly 240 by 170 mm; on anything much smaller than about 180 mm wide the
+territory names will start to overrun their territories, because text keeps
+its point size while the map shrinks with the device. Pass \code{labels = FALSE}
+for a thumbnail.
 }
 \examples{
 rk_plot_map(rk_world())

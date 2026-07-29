@@ -12,7 +12,24 @@
 #' m$continent_bonus
 #' rk_neighbors(m, "Brazil")
 rk_world <- function() {
-  structure(risk_map, class = "rk_map")
+  structure(.rk_risk_map(), class = "rk_map")
+}
+
+# Lazy-loaded datasets are attached to the package environment rather than to
+# its namespace, so package code cannot see `risk_map` unless a user has run
+# `library(risikoR)`. Fetch it explicitly, once, so that `risikoR::rk_world()`
+# and the Shiny app work without attaching the package.
+.rk_data_cache <- new.env(parent = emptyenv())
+
+.rk_risk_map <- function() {
+  cached <- .rk_data_cache[["risk_map"]]
+  if (!is.null(cached)) {
+    return(cached)
+  }
+  env <- new.env(parent = emptyenv())
+  utils::data("risk_map", package = "risikoR", envir = env)
+  assign("risk_map", env$risk_map, envir = .rk_data_cache)
+  env$risk_map
 }
 
 #' Build a Risk map

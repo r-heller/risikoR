@@ -14,6 +14,10 @@ ui <- bslib::page_navbar(
     "risikoR"
   ),
   theme = bslib::bs_theme(version = 5, primary = "#5E2C8E"),
+  header = shiny::tags$head(
+    shiny::tags$link(rel = "stylesheet", type = "text/css",
+                     href = "risikoR.css")
+  ),
   bslib::nav_panel("Play", mod_play_ui("play")),
   bslib::nav_panel("Duel analyser", mod_duel_ui("duel")),
   bslib::nav_panel("Battle simulator", mod_battle_ui("battle")),

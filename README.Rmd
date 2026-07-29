@@ -79,7 +79,7 @@ rk_plot_conquest(20, def_range = 1:25, method = "exact")
 `rk_reinforce()` -> `rk_attack()` -> `rk_fortify()` -> `rk_end_turn()`, and
 every one of them returns a new game rather than modifying the old one.
 
-```{r map, fig.height = 6}
+```{r map, fig.width = 9.6, fig.height = 6.8}
 game <- rk_game(c("Red", "Blue", "Green"), seed = 1)
 game
 

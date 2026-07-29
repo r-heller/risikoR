@@ -13,8 +13,9 @@ rk_plot_tournament(results)
 A \code{ggplot} object.
 }
 \description{
-Draws the win rate of each player in a \code{\link[=rk_tournament]{rk_tournament()}} result as a bar
-chart, coloured by strategy.
+Draws the win rate of each player in a \code{\link[=rk_tournament]{rk_tournament()}} result as a
+horizontal bar chart, sorted by win rate. Each bar carries the player's map
+colour and is labelled with the strategy it played.
 }
 \examples{
 \donttest{

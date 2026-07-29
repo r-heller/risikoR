@@ -19,7 +19,8 @@ A \code{ggplot} object.
 }
 \description{
 Draws the exact outcome distribution of one dice duel (see
-\code{\link[=rk_duel_dist]{rk_duel_dist()}}) as a bar chart, with the expected losses in the subtitle.
+\code{\link[=rk_duel_dist]{rk_duel_dist()}}) as a bar chart. Bars are coloured by who comes out of the
+exchange ahead, and labelled with the probability.
 }
 \examples{
 rk_plot_duel(3, 2)
