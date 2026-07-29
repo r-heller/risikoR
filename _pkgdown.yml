@@ -1,0 +1,89 @@
+url: https://r-heller.github.io/risikoR/
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#5E2C8E"
+    link-color: "#5E2C8E"
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - risikoR
+  - articles/playing
+  - articles/strategy
+
+reference:
+- title: Combat engine
+  desc: >
+    One throw of the dice, exactly enumerated, and the battles built from it.
+  contents:
+  - rk_duel
+  - rk_duel_dist
+  - rk_duel_odds
+  - rk_battle
+  - rk_battle_odds
+  - rk_odds_table
+
+- title: The board
+  desc: The classic world map, custom boards and the adjacency graph.
+  contents:
+  - rk_world
+  - rk_map
+  - rk_neighbors
+  - risk_map
+
+- title: Game state
+  desc: Creating a game and asking it questions.
+  contents:
+  - rk_game
+  - rk_owner
+  - rk_armies
+  - rk_territories
+  - rk_continents_held
+  - rk_reinforcements
+  - rk_is_winner
+  - rk_winner
+  - summary.rk_game
+
+- title: The turn cycle
+  desc: >
+    Reinforce, attack, fortify, hand over. Every mutator returns a new game.
+  contents:
+  - rk_reinforce
+  - rk_attack
+  - rk_fortify
+  - rk_end_turn
+  - rk_step
+  - rk_legal_attacks
+
+- title: Agents and tournaments
+  desc: Scriptable policies, whole games and strategy comparisons.
+  contents:
+  - rk_ai
+  - rk_play
+  - rk_tournament
+
+- title: Visualisation
+  desc: Every plot function returns a ggplot2 object.
+  contents:
+  - rk_plot_map
+  - rk_plot_duel
+  - rk_plot_conquest
+  - rk_plot_odds_heatmap
+  - rk_plot_tournament
+  - autoplot.rk_game
+
+- title: Application
+  contents:
+  - rk_run_app
+
+- title: internal
+  contents:
+  - reexports

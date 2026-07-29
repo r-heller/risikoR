@@ -1,0 +1,212 @@
+---
+title: "Playing a game"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Playing a game}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  dpi = 110
+)
+```
+
+```{r setup}
+library(risikoR)
+```
+
+This article scripts a whole game: setting up the board, taking a turn by
+hand, handing the turn to an AI agent, and reading the map.
+
+## The board
+
+`rk_world()` returns the classic 42-territory board as an `rk_map`.
+
+```{r}
+world <- rk_world()
+world
+world$continent_bonus
+rk_neighbors(world, "Brazil")
+```
+
+Plotting the map alone shows the adjacency graph coloured by continent. Note
+Alaska and Kamchatka: the board wraps around, so the segment between them
+crosses the whole picture.
+
+```{r}
+rk_plot_map(world)
+```
+
+Custom boards are welcome; `rk_map()` validates the graph (it must be
+symmetric, and every territory must belong to exactly one continent) and lays
+out any board you give it on a circle when you supply no coordinates.
+
+```{r}
+mini <- rk_map(
+  territories = c("A", "B", "C", "D"),
+  adjacency = list(
+    A = c("B", "C"), B = c("A", "D"), C = c("A", "D"), D = c("B", "C")
+  ),
+  continent = list(North = c("A", "B"), South = c("C", "D")),
+  continent_bonus = c(North = 2, South = 3)
+)
+mini
+```
+
+## Dealing a game
+
+```{r}
+game <- rk_game(c("Red", "Blue", "Green"), seed = 2024)
+game
+```
+
+Each player is dealt an equal share of the territories and spreads the
+standard number of starting armies (35 for three players) over them.
+
+```{r}
+summary(game)
+```
+
+## One turn by hand
+
+A turn runs in three phases. Every function returns a **new** game, so you can
+keep the old one and compare, replay or branch.
+
+### Reinforce
+
+The allowance is one army per three territories, never fewer than three, plus
+the bonus for every continent held outright.
+
+```{r}
+rk_reinforcements(game, "Red")
+```
+
+Placements are a named vector that must account for every army:
+
+```{r}
+front <- rk_legal_attacks(game, "Red")
+head(front, 3)
+
+placements <- c(rk_reinforcements(game, "Red"))
+names(placements) <- front$from[[1]]
+game <- rk_reinforce(game, "Red", placements)
+game$phase
+```
+
+### Attack
+
+```{r}
+set.seed(7)
+targets <- rk_legal_attacks(game, "Red")
+best <- targets[which.min(targets$def_armies), ]
+best
+
+game <- rk_attack(game, best$from, best$to)
+game$last_battle
+rk_owner(game, best$to)
+```
+
+The attack is resolved by `rk_battle()` internally, so the same odds apply as
+in the combat engine — and `rk_battle_odds()` will tell you beforehand what
+you are getting into:
+
+```{r}
+rk_battle_odds(best$att_armies, best$def_armies, method = "exact")
+```
+
+### Fortify and hand over
+
+One move along a path of your own territories ends the turn.
+
+```{r}
+own <- rk_territories(game, "Red")
+from <- own[which.max(rk_armies(game, own))]
+reachable <- intersect(rk_neighbors(game, from), own)
+if (length(reachable) > 0 && rk_armies(game, from) > 1) {
+  game <- rk_fortify(game, from, reachable[[1]], 1)
+}
+game <- rk_end_turn(game)
+game$turn
+```
+
+## Letting the agents finish it
+
+`rk_ai()` returns a policy — a function of `(game, player)` that proposes an
+action. `rk_step()` applies one action; `rk_play()` runs the whole game.
+
+```{r}
+bot <- rk_ai("aggressive")
+bot(game, game$turn)$action
+```
+
+```{r}
+set.seed(11)
+result <- rk_play(
+  game,
+  policies = c(Red = "aggressive", Blue = "cautious", Green = "random"),
+  max_rounds = 40
+)
+result
+```
+
+The result carries the standings for every round, which makes the shape of the
+game easy to see:
+
+```{r, fig.height = 4}
+standings <- result$standings
+ggplot2::ggplot(
+  standings,
+  ggplot2::aes(round, territories, colour = player)
+) +
+  ggplot2::geom_line(linewidth = 0.8) +
+  ggplot2::labs(
+    x = "round", y = "territories held", colour = NULL,
+    title = "Who was winning, and when"
+  ) +
+  ggplot2::theme_minimal()
+```
+
+```{r}
+rk_plot_map(result$game)
+```
+
+## Writing your own agent
+
+A policy is any function of `(game, player)` that returns an action list, so
+a new strategy is a few lines. This one always reinforces its weakest
+territory and never attacks:
+
+```{r}
+turtle <- function(game, player) {
+  if (identical(game$phase, "reinforce")) {
+    own <- rk_territories(game, player)
+    placements <- rk_reinforcements(game, player)
+    names(placements) <- own[which.min(rk_armies(game, own))]
+    return(list(action = "reinforce", placements = placements))
+  }
+  list(action = "end_turn")
+}
+
+set.seed(5)
+turtle_result <- rk_play(
+  rk_game(c("Red", "Blue"), seed = 5),
+  policies = list(Red = rk_ai("aggressive"), Blue = turtle),
+  max_rounds = 25
+)
+turtle_result
+```
+
+Turtling does not work. Neither does anything else, reliably — which is why
+`rk_tournament()` exists.
+
+## The app
+
+`rk_run_app()` opens a four-tab Shiny application: play against the agents on
+a clickable map, analyse a single duel, simulate battles against the exact
+solution, and run tournaments in the strategy lab.

@@ -1,0 +1,153 @@
+---
+title: "The probability of Risk"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The probability of Risk}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 110
+)
+```
+
+```{r setup}
+library(risikoR)
+```
+
+Risk looks like a game of luck. It is, but the luck is completely
+characterised: every roll of the dice has an exact distribution, every battle
+is an absorbing Markov chain, and both can be written down. This article walks
+from one throw of the dice up to whole-game win rates.
+
+## One throw of the dice
+
+There are `6^n_att * 6^n_def` equally likely combinations, few enough to
+enumerate exhaustively. `rk_duel_dist()` does exactly that.
+
+```{r}
+rk_duel_dist(3, 2)
+```
+
+Three attacking dice against two defending dice is the standard case, and it
+is worth memorising: the attacker loses nothing about 37% of the time, trades
+one for one about 34% of the time, and loses two about 29% of the time.
+
+Comparing every legal dice pairing shows how much the extra dice are worth:
+
+```{r}
+pairings <- expand.grid(n_att = 1:3, n_def = 1:2)
+odds <- do.call(
+  rbind,
+  Map(rk_duel_odds, pairings$n_att, pairings$n_def)
+)
+odds[order(odds$n_def, odds$n_att), ]
+```
+
+Two lessons fall out. Rolling three dice instead of one roughly halves the
+attacker's expected loss, so never attack with fewer armies than you need for
+three dice. And the defender's second die is worth more than the attacker's
+third: with two defending dice the attacker loses more armies than the
+defender in every pairing.
+
+## The whole battle
+
+A battle repeats the duel until one side runs out. Because each duel removes a
+fixed number of armies, the process is an absorbing Markov chain over states
+`(attacker armies, defender armies)` — which `rk_battle_odds(method = "exact")`
+solves directly.
+
+```{r}
+rk_battle_odds(10, 8, method = "exact")
+```
+
+The Monte Carlo estimate converges to it:
+
+```{r}
+set.seed(1)
+mc <- do.call(rbind, lapply(
+  c(100, 1000, 10000),
+  function(n) rk_battle_odds(10, 8, n = n)
+))
+mc$exact <- rk_battle_odds(10, 8, method = "exact")$p_conquer
+mc[, c("n", "p_conquer", "exact")]
+```
+
+Holding the attacker fixed and varying the defender traces the conquest curve:
+
+```{r}
+rk_plot_conquest(20, def_range = 1:25, method = "exact")
+```
+
+The crossing point is the number to remember: an attacker needs roughly a
+**5-to-4 advantage** for even odds, and about a 3-to-2 advantage to be
+comfortable.
+
+```{r}
+odds_grid <- rk_odds_table(att_range = 2:20, def_range = 1:20)
+even <- do.call(rbind, lapply(split(odds_grid, odds_grid$def_armies), function(d) {
+  win <- d[d$p_conquer >= 0.5, ]
+  if (nrow(win) == 0) return(NULL)
+  win[1, c("def_armies", "att_armies", "p_conquer")]
+}))
+head(even, 10)
+```
+
+The whole surface at once:
+
+```{r, fig.height = 5}
+rk_plot_odds_heatmap(att_range = 2:20, def_range = 1:20)
+```
+
+## From battles to games
+
+Exact odds do not settle the game, because a game is a sequence of decisions
+about *which* battles to fight. The built-in agents encode three answers:
+
+* `"random"` attacks at random,
+* `"aggressive"` attacks the weakest reachable enemy while it outnumbers them,
+* `"cautious"` attacks only above an army ratio and otherwise consolidates.
+
+`rk_tournament()` deals a fresh board for every game and plays it out.
+
+```{r}
+results <- rk_tournament(
+  c(Red = "aggressive", Blue = "cautious", Green = "random"),
+  n_games = 12,
+  max_rounds = 40,
+  seed = 1
+)
+results
+```
+
+```{r}
+rk_plot_tournament(results)
+```
+
+Win rates depend on the round cap: aggression is rewarded when games are cut
+short, patience when they are allowed to run.
+
+```{r}
+caps <- do.call(rbind, lapply(c(10, 40), function(cap) {
+  out <- rk_tournament(
+    c(Red = "aggressive", Blue = "cautious"),
+    n_games = 8, max_rounds = cap, seed = 2
+  )
+  out$max_rounds <- cap
+  out
+}))
+caps[, c("max_rounds", "player", "strategy", "win_rate", "mean_rounds")]
+```
+
+## Where the model stops
+
+The engine implements the combat rules exactly, but a full game of Risk also
+has cards, sets traded for armies, and the rule that a conquering player draws
+a card. Those are not modelled here, so tournament win rates describe *these*
+agents on *this* board rather than the printed game in full.

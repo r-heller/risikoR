@@ -1,0 +1,165 @@
+---
+title: "Getting started with risikoR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with risikoR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 110
+)
+```
+
+```{r setup}
+library(risikoR)
+```
+
+`risikoR` has four layers, each usable on its own:
+
+* the **combat engine** — `rk_duel()`, `rk_duel_dist()`, `rk_duel_odds()`;
+* the **battle simulator** — `rk_battle()`, `rk_battle_odds()`, `rk_odds_table()`;
+* the **game model** — `rk_game()` plus the turn cycle and the AI agents;
+* the **plot layer** — `rk_plot_map()` and friends, all returning ggplot objects.
+
+## The dice duel
+
+The heart of Risk is a dice duel. The attacker rolls up to three dice, the
+defender up to two, and the highest dice are compared pairwise. The attacker
+must roll *strictly* higher: ties go to the defender.
+
+```{r}
+set.seed(1)
+rk_duel(3, 2)
+```
+
+`rk_duel_dist()` enumerates all `6^3 * 6^2 = 7776` equally likely combinations,
+so the probabilities are exact rather than simulated:
+
+```{r}
+rk_duel_dist(3, 2)
+```
+
+`rk_duel_odds()` summarises the same enumeration:
+
+```{r}
+rk_duel_odds(3, 2)
+```
+
+The attacker expects to lose 0.92 armies and the defender 1.08 per three-on-two
+duel — the standard textbook values.
+
+```{r}
+rk_plot_duel(3, 2)
+```
+
+## A full battle
+
+`rk_battle()` keeps rolling until the attacker runs out of spare armies or the
+defender is wiped out.
+
+```{r}
+set.seed(1)
+battle <- rk_battle(10, 8)
+battle
+```
+
+Every battle carries its own log, which `autoplot()` turns into a picture of
+the fight:
+
+```{r}
+ggplot2::autoplot(battle)
+```
+
+## Conquest probability
+
+`rk_battle_odds()` answers the question that actually matters at the table:
+will this attack succeed? The `"exact"` method solves the underlying Markov
+chain, so no simulation error is involved; `"mc"` simulates instead.
+
+```{r}
+rk_battle_odds(20, 15, method = "exact")
+
+set.seed(1)
+rk_battle_odds(20, 15, n = 1000)
+```
+
+Ten attackers beat five defenders about four times in five; the same ten
+against fifteen almost never win:
+
+```{r}
+rk_odds_table(att_range = c(10, 20), def_range = c(5, 15))
+```
+
+## Setting up a game
+
+`rk_game()` deals the 42 territories of the classic board and spreads each
+player's starting armies over them.
+
+```{r}
+game <- rk_game(c("Red", "Blue", "Green"), seed = 1)
+game
+```
+
+```{r}
+summary(game)
+```
+
+```{r, fig.height = 5}
+rk_plot_map(game)
+```
+
+## Taking a turn
+
+A turn runs `reinforce` -> `attack` -> `fortify`, and every mutator returns a
+new game object rather than changing the old one.
+
+```{r}
+placements <- rk_reinforcements(game, "Red")
+names(placements) <- rk_territories(game, "Red")[[1]]
+placements
+
+game <- rk_reinforce(game, "Red", placements)
+game$phase
+```
+
+```{r}
+head(rk_legal_attacks(game, "Red"), 3)
+```
+
+```{r}
+set.seed(42)
+targets <- rk_legal_attacks(game, "Red")
+game <- rk_attack(game, targets$from[[1]], targets$to[[1]])
+game$last_battle
+```
+
+## Letting the machine play
+
+`rk_ai()` builds a policy; `rk_play()` runs a whole game with one policy per
+player.
+
+```{r}
+set.seed(1)
+result <- rk_play(
+  rk_game(c("Red", "Blue"), seed = 3),
+  policies = c(Red = "aggressive", Blue = "cautious"),
+  max_rounds = 30
+)
+result
+tail(result$standings, 4)
+```
+
+`rk_tournament()` repeats that many times and reports the win rates, and
+`rk_run_app()` opens the interactive Shiny application for playing, simulating
+and analysing games.
+
+Two further articles go deeper:
+[playing a game](https://r-heller.github.io/risikoR/articles/playing.html) and
+[the probability of Risk](https://r-heller.github.io/risikoR/articles/strategy.html).

@@ -1,0 +1,17 @@
+^risikoR\.Rproj$
+^\.Rproj\.user$
+^\.github$
+^_pkgdown\.ya?ml$
+^docs$
+^pkgdown$
+^data-raw$
+^README\.Rmd$
+^cran-comments\.md$
+^LICENSE\.md$
+^CLAUDE.*\.md$
+^\.claude$
+^\.orchestration$
+^.*\.svg$
+^codecov\.yml$
+^vignettes/articles$
+^\.lintr$
