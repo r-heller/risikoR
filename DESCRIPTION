@@ -1,7 +1,7 @@
 Package: risikoR
 Title: Simulate, Analyse and Play the Board Game Risk
 Version: 0.1.0
-Authors@R: person("Raban", "Heller", email = "raban.heller@charite.de",
+Authors@R: person("Raban", "Heller", email = "raban.heller@uni-ulm.de",
     role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8006-9742"))
 Description: A toolkit for the board game Risk (German "Risiko"). Provides the
     dice-combat engine, single-battle and whole-conquest simulators, closed-form
