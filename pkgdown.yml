@@ -1,0 +1,11 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  articles/playing: playing.html
+  risikoR: risikoR.html
+  articles/strategy: strategy.html
+last_built: 2026-09-08T12:33Z
+urls:
+  reference: https://r-heller.github.io/risikoR/reference
+  article: https://r-heller.github.io/risikoR/articles

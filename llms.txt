@@ -1,0 +1,264 @@
+# risikoR
+
+Simulate, analyse and play the board game **Risk** (German *Risiko*) in
+R: the exact dice-combat engine, battle and whole-game simulators, a
+scriptable game model with AI agents, a ggplot2 map layer, and an
+interactive Shiny app.
+
+## Installation
+
+``` r
+
+# install.packages("remotes")
+remotes::install_github("r-heller/risikoR")
+```
+
+## The dice
+
+The attacker rolls up to three dice, the defender up to two, and the
+highest dice are compared pairwise. The attacker wins a pair only by
+rolling strictly higher — ties go to the defender. Every outcome is
+enumerated exactly, never simulated:
+
+``` r
+
+library(risikoR)
+
+rk_duel_dist(3, 2)
+#> # A tibble: 3 × 5
+#>   n_att n_def att_loss def_loss     p
+#>   <int> <int>    <int>    <int> <dbl>
+#> 1     3     2        0        2 0.372
+#> 2     3     2        1        1 0.336
+#> 3     3     2        2        0 0.293
+```
+
+``` r
+
+rk_duel_odds(3, 2)
+#> # A tibble: 1 × 8
+#>   n_att n_def e_att_loss e_def_loss sd_loss p_att_wins_all p_def_wins_all
+#>   <int> <int>      <dbl>      <dbl>   <dbl>          <dbl>          <dbl>
+#> 1     3     2      0.921       1.08   0.811          0.372          0.293
+#> # ℹ 1 more variable: p_split <dbl>
+```
+
+## The battles
+
+[`rk_battle()`](https://r-heller.github.io/risikoR/reference/rk_battle.md)
+fights a territory out;
+[`rk_battle_odds()`](https://r-heller.github.io/risikoR/reference/rk_battle_odds.md)
+gives the win probability either by Monte Carlo or by solving the Markov
+chain exactly.
+
+``` r
+
+set.seed(1)
+rk_battle(10, 8)
+#> <rk_battle> territory conquered after 8 duels
+#> Attacker: 3 left · Defender: 0 left
+
+rk_battle_odds(10, 8, method = "exact")
+#> # A tibble: 1 × 7
+#>   att_armies def_armies method     n p_conquer e_att_survivors e_def_survivors
+#>        <int>      <int> <chr>  <int>     <dbl>           <dbl>           <dbl>
+#> 1         10          8 exact     NA     0.646            4.05            1.23
+```
+
+An attacker needs roughly a 5-to-4 advantage for even odds:
+
+``` r
+
+rk_plot_conquest(20, def_range = 1:25, method = "exact")
+```
+
+![](reference/figures/README-conquest-1.png)
+
+## The game
+
+[`rk_game()`](https://r-heller.github.io/risikoR/reference/rk_game.md)
+deals the classic 42-territory board; the turn cycle is
+[`rk_reinforce()`](https://r-heller.github.io/risikoR/reference/rk_reinforce.md)
+-\>
+[`rk_attack()`](https://r-heller.github.io/risikoR/reference/rk_attack.md)
+-\>
+[`rk_fortify()`](https://r-heller.github.io/risikoR/reference/rk_fortify.md)
+-\>
+[`rk_end_turn()`](https://r-heller.github.io/risikoR/reference/rk_end_turn.md),
+and every one of them returns a new game rather than modifying the old
+one.
+
+``` r
+
+game <- rk_game(c("Red", "Blue", "Green"), seed = 1)
+game
+#> <rk_game> 3 players on 42 territories, round 1
+#> Turn: Red (reinforce phase)
+#> * Red: 14 territories, 35 armies, 0 continents
+#>   Blue: 14 territories, 35 armies, 0 continents
+#>   Green: 14 territories, 35 armies, 0 continents
+
+rk_plot_map(game)
+```
+
+![](reference/figures/README-map-1.png)
+
+## The agents
+
+[`rk_ai()`](https://r-heller.github.io/risikoR/reference/rk_ai.md)
+builds a policy,
+[`rk_play()`](https://r-heller.github.io/risikoR/reference/rk_play.md)
+runs a whole game and
+[`rk_tournament()`](https://r-heller.github.io/risikoR/reference/rk_tournament.md)
+compares strategies over many games.
+
+``` r
+
+set.seed(1)
+rk_play(
+  rk_game(c("Red", "Blue"), seed = 3),
+  policies = c(Red = "aggressive", Blue = "cautious"),
+  max_rounds = 30
+)
+#> <rk_game_result> 2 players
+#> Winner: Red after 13 rounds
+#> Policies: Red (aggressive) and Blue (cautious)
+```
+
+## The app
+
+``` r
+
+rk_run_app()
+```
+
+Four tabs: play against the agents on a clickable map, analyse a single
+duel, simulate battles against the exact solution, and run tournaments
+in the strategy lab.
+
+## Learn more
+
+- [`vignette("risikoR")`](https://r-heller.github.io/risikoR/articles/risikoR.md)
+  — the guided tour
+- [Playing a
+  game](https://r-heller.github.io/risikoR/articles/playing.html)
+- [The probability of
+  Risk](https://r-heller.github.io/risikoR/articles/strategy.html)
+
+# Package index
+
+## Combat engine
+
+One throw of the dice, exactly enumerated, and the battles built from
+it.
+
+- [`rk_duel()`](https://r-heller.github.io/risikoR/reference/rk_duel.md)
+  : Resolve a single Risk dice duel
+- [`rk_duel_dist()`](https://r-heller.github.io/risikoR/reference/rk_duel_dist.md)
+  : Exact loss distribution for a single dice duel
+- [`rk_duel_odds()`](https://r-heller.github.io/risikoR/reference/rk_duel_odds.md)
+  : Expected losses and win probability for a single dice duel
+- [`rk_battle()`](https://r-heller.github.io/risikoR/reference/rk_battle.md)
+  : Simulate a full battle between two territories
+- [`rk_battle_odds()`](https://r-heller.github.io/risikoR/reference/rk_battle_odds.md)
+  : Win probability and expected survivors for a battle
+- [`rk_odds_table()`](https://r-heller.github.io/risikoR/reference/rk_odds_table.md)
+  : Conquest probability over a grid of army counts
+
+## The board
+
+The classic world map, custom boards and the adjacency graph.
+
+- [`rk_world()`](https://r-heller.github.io/risikoR/reference/rk_world.md)
+  : The classic Risk world map
+- [`rk_map()`](https://r-heller.github.io/risikoR/reference/rk_map.md) :
+  Build a Risk map
+- [`rk_neighbors()`](https://r-heller.github.io/risikoR/reference/rk_neighbors.md)
+  : Neighbouring territories
+- [`risk_map`](https://r-heller.github.io/risikoR/reference/risk_map.md)
+  : The classic Risk world board
+
+## Game state
+
+Creating a game and asking it questions.
+
+- [`rk_game()`](https://r-heller.github.io/risikoR/reference/rk_game.md)
+  : Create a new Risk game state
+- [`rk_owner()`](https://r-heller.github.io/risikoR/reference/rk_owner.md)
+  : Who owns a territory
+- [`rk_armies()`](https://r-heller.github.io/risikoR/reference/rk_armies.md)
+  : How many armies stand on a territory
+- [`rk_territories()`](https://r-heller.github.io/risikoR/reference/rk_territories.md)
+  : Territories held by a player
+- [`rk_continents_held()`](https://r-heller.github.io/risikoR/reference/rk_continents_held.md)
+  : Continents fully controlled by a player
+- [`rk_reinforcements()`](https://r-heller.github.io/risikoR/reference/rk_reinforcements.md)
+  : Reinforcement armies available to a player
+- [`rk_is_winner()`](https://r-heller.github.io/risikoR/reference/rk_is_winner.md)
+  : Has the game been won?
+- [`rk_winner()`](https://r-heller.github.io/risikoR/reference/rk_winner.md)
+  : The winner of the game
+- [`summary(`*`<rk_game>`*`)`](https://r-heller.github.io/risikoR/reference/summary.rk_game.md)
+  : Standings for every player
+
+## The turn cycle
+
+Reinforce, attack, fortify, hand over. Every mutator returns a new game.
+
+- [`rk_reinforce()`](https://r-heller.github.io/risikoR/reference/rk_reinforce.md)
+  : Place reinforcement armies
+- [`rk_attack()`](https://r-heller.github.io/risikoR/reference/rk_attack.md)
+  : Attack a neighbouring territory
+- [`rk_fortify()`](https://r-heller.github.io/risikoR/reference/rk_fortify.md)
+  : Move armies between two connected territories
+- [`rk_end_turn()`](https://r-heller.github.io/risikoR/reference/rk_end_turn.md)
+  : End the current turn
+- [`rk_step()`](https://r-heller.github.io/risikoR/reference/rk_step.md)
+  : Advance the game by one action
+- [`rk_legal_attacks()`](https://r-heller.github.io/risikoR/reference/rk_legal_attacks.md)
+  : Attacks available to a player
+
+## Agents and tournaments
+
+Scriptable policies, whole games and strategy comparisons.
+
+- [`rk_ai()`](https://r-heller.github.io/risikoR/reference/rk_ai.md) :
+  Built-in artificial-intelligence agents
+- [`rk_play()`](https://r-heller.github.io/risikoR/reference/rk_play.md)
+  : Play a game to the end
+- [`rk_tournament()`](https://r-heller.github.io/risikoR/reference/rk_tournament.md)
+  : Run many games and compare strategies
+
+## Visualisation
+
+Every plot function returns a ggplot2 object.
+
+- [`rk_plot_map()`](https://r-heller.github.io/risikoR/reference/rk_plot_map.md)
+  : Plot the world map
+- [`rk_plot_duel()`](https://r-heller.github.io/risikoR/reference/rk_plot_duel.md)
+  : Plot the loss distribution of a single duel
+- [`rk_plot_conquest()`](https://r-heller.github.io/risikoR/reference/rk_plot_conquest.md)
+  : Plot conquest probability across defender strength
+- [`rk_plot_odds_heatmap()`](https://r-heller.github.io/risikoR/reference/rk_plot_odds_heatmap.md)
+  : Heatmap of conquest probability
+- [`rk_plot_tournament()`](https://r-heller.github.io/risikoR/reference/rk_plot_tournament.md)
+  : Plot tournament win rates
+- [`autoplot(`*`<rk_game>`*`)`](https://r-heller.github.io/risikoR/reference/autoplot.rk_game.md)
+  [`autoplot(`*`<rk_battle>`*`)`](https://r-heller.github.io/risikoR/reference/autoplot.rk_game.md)
+  : Plot a game or a battle
+
+## Application
+
+- [`rk_run_app()`](https://r-heller.github.io/risikoR/reference/rk_run_app.md)
+  : Launch the interactive risikoR application
+
+# Articles
+
+### Articles
+
+- [Getting started with
+  risikoR](https://r-heller.github.io/risikoR/articles/risikoR.md):
+- [Playing a
+  game](https://r-heller.github.io/risikoR/articles/playing.md):
+- [The probability of
+  Risk](https://r-heller.github.io/risikoR/articles/strategy.md):
