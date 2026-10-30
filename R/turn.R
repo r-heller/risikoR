@@ -33,12 +33,13 @@ rk_reinforce <- function(game, player, placements) {
   }
 
   if (!is.numeric(placements) || length(placements) == 0L ||
-      is.null(names(placements)) || anyNA(placements)) {
+      is.null(names(placements)) || anyNA(placements) || any(!is.finite(placements))) {
     cli::cli_abort(
       "{.arg placements} must be a named numeric vector of armies."
     )
   }
-  if (any(placements < 0) || any(placements != as.integer(placements))) {
+  if (any(placements < 0) || any(placements != trunc(placements)) ||
+      any(placements > .Machine$integer.max)) {
     cli::cli_abort("{.arg placements} must be non-negative whole numbers.")
   }
   if (anyDuplicated(names(placements)) > 0L) {
@@ -63,7 +64,10 @@ rk_reinforce <- function(game, player, placements) {
   }
 
   idx <- .rk_index(game, names(placements))
-  game$state$armies[idx] <- game$state$armies[idx] + as.integer(placements)
+  updated <- as.double(game$state$armies[idx]) + placements
+  if (any(updated > .Machine$integer.max))
+    cli::cli_abort("Reinforcement would exceed the supported army count.")
+  game$state$armies[idx] <- as.integer(updated)
   game <- .rk_log(game, "reinforce", armies = need, conquered = FALSE)
   game$phase <- "attack"
   game
@@ -82,7 +86,8 @@ rk_reinforce <- function(game, player, placements) {
 #'   another player.
 #' @param max_def Maximum defender dice permitted (default `2L`).
 #' @param move Number of armies to move into a conquered territory. Must leave
-#'   at least one army behind. Defaults to all but one of the surviving
+#'   at least one army behind and move at least as many armies as the attacker
+#'   rolled dice in the final combat round. Defaults to all but one of the surviving
 #'   attackers.
 #'
 #' @return A new `rk_game` object with the battle stored in `last_battle`. The
@@ -146,10 +151,12 @@ rk_attack <- function(game, from, to, max_def = 2L, move = NULL) {
   moved <- 0L
 
   if (battle$conquered) {
+    # Recover the number of attacking dice before the final round casualties.
+    final_dice <- min(3L, battle$att_remaining + utils::tail(battle$log$att_loss, 1L) - 1L)
     moved <- if (is.null(move)) {
       battle$att_remaining - 1L
     } else {
-      .rk_check_count(move, "move", 1L, battle$att_remaining - 1L)
+      .rk_check_count(move, "move", final_dice, battle$att_remaining - 1L)
     }
     game$state$owner[i_to] <- player
     game$state$armies[i_from] <- battle$att_remaining - moved
@@ -231,6 +238,8 @@ rk_fortify <- function(game, from, to, armies) {
     ))
   }
   armies <- .rk_check_count(armies, "armies", 1L, available)
+  if (as.double(rk_armies(game, to)) + armies > .Machine$integer.max)
+    cli::cli_abort("Fortification would exceed the supported army count.")
 
   game$state$armies[.rk_index(game, from)] <-
     game$state$armies[.rk_index(game, from)] - armies

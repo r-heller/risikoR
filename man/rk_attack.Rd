@@ -18,7 +18,8 @@ another player.}
 \item{max_def}{Maximum defender dice permitted (default \code{2L}).}
 
 \item{move}{Number of armies to move into a conquered territory. Must leave
-at least one army behind. Defaults to all but one of the surviving
+at least one army behind and move at least as many armies as the attacker
+rolled dice in the final combat round. Defaults to all but one of the surviving
 attackers.}
 }
 \value{

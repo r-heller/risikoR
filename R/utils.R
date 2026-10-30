@@ -2,7 +2,8 @@
 
 # Validate a single whole number in [lo, hi] and return it as an integer.
 .rk_check_count <- function(x, arg, lo, hi, call = rlang::caller_env()) {
-  if (!is.numeric(x) || length(x) != 1L || is.na(x) || x != as.integer(x)) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x != trunc(x) ||
+      abs(x) > .Machine$integer.max) {
     cli::cli_abort(
       "{.arg {arg}} must be a single whole number.",
       call = call

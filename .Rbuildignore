@@ -10,3 +10,6 @@
 ^.*\.svg$
 ^codecov\.yml$
 ^vignettes/articles$
+
+^\.git$
+^MAINTENANCE\.md$

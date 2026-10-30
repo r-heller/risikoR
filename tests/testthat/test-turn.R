@@ -109,12 +109,12 @@ test_that("the number of armies moved in can be chosen", {
   game$state$armies <- c(1L, 1L, 30L, 1L)
   game$phase <- "attack"
 
-  after <- rk_attack(game, "C", "D", move = 2L)
-  expect_equal(rk_armies(after, "D"), 2L)
+  after <- rk_attack(game, "C", "D", move = 3L)
+  expect_equal(rk_armies(after, "D"), 3L)
   expect_equal(
-    rk_armies(after, "C"), after$last_battle$att_remaining - 2L
+    rk_armies(after, "C"), after$last_battle$att_remaining - 3L
   )
-  expect_error(rk_attack(game, "C", "D", move = 0), "between 1 and")
+  expect_error(rk_attack(game, "C", "D", move = 0), "between 3 and")
 })
 
 test_that("a lost battle leaves ownership alone", {
@@ -234,4 +234,36 @@ test_that("turn errors read well", {
   game <- rk_test_game()
   expect_snapshot(rk_attack(game, "A", "B"), error = TRUE)
   expect_snapshot(rk_reinforce(game, "Blue", c(A = 3L)), error = TRUE)
+})
+
+
+test_that("occupation uses the final attack dice and preserves input on failure", {
+  game <- rk_test_game()
+  game$state$owner <- c("Red", "Red", "Red", "Blue")
+  game$phase <- "attack"
+  for (n in 2:4) {
+    game$state$armies <- c(1L,1L,as.integer(n),1L)
+    local_mocked_bindings(rk_battle=function(...) list(conquered=TRUE,
+      att_remaining=as.integer(n),def_remaining=0L,
+      log=data.frame(round=1L,att_loss=0L,def_loss=1L)))
+    original <- game
+    after <- rk_attack(game,"C","D",move=n-1L)
+    expect_equal(rk_armies(after,"D"),n-1L)
+    expect_error(rk_attack(game,"C","D",move=n-2L),'between')
+    expect_identical(game,original)
+  }
+})
+
+test_that("reinforcement and fortification reject non-finite and overflowing armies", {
+  game <- rk_test_game()
+  for (bad in list(Inf,-Inf,NA_real_,1.5,.Machine$integer.max+1))
+    expect_error(rk_reinforce(game,"Red",c(A=bad)))
+  game$state$armies[1] <- .Machine$integer.max
+  expect_error(rk_reinforce(game,"Red",c(A=rk_reinforcements(game,"Red"))), 'exceed')
+  game$phase <- 'attack'
+  game$state$owner <- c('Red','Red','Red','Blue')
+  game$state$armies <- c(2L,.Machine$integer.max,1L,1L)
+  original <- game
+  expect_error(rk_fortify(game,'A','B',1L),'exceed')
+  expect_identical(game,original)
 })

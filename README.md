@@ -26,6 +26,11 @@ R: the exact dice-combat engine, battle and whole-game simulators, a
 scriptable game model with AI agents, a ggplot2 map layer, and an
 interactive Shiny app.
 
+The whole-game engine is a conquest variant: it omits card trading, secret
+missions, and the printed two-player neutral-army setup. Dice, reinforcement,
+conquest, elimination and fortification are implemented. Conquest must move at
+least the number of dice used in the final attack round and leave one army behind.
+
 ## Installation
 
 ``` r
@@ -143,3 +148,8 @@ in the strategy lab.
   game](https://r-heller.github.io/risikoR/articles/playing.html)
 - [The probability of
   Risk](https://r-heller.github.io/risikoR/articles/strategy.html)
+
+## Local maintenance candidate
+
+See [MAINTENANCE.md](MAINTENANCE.md) for the 30 October 2026 repairs, exact local
+installation path, verification results and remaining release limits.
