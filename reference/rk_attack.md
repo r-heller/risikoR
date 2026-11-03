@@ -34,8 +34,9 @@ rk_attack(game, from, to, max_def = 2L, move = NULL)
 - move:
 
   Number of armies to move into a conquered territory. Must leave at
-  least one army behind. Defaults to all but one of the surviving
-  attackers.
+  least one army behind and move at least as many armies as the attacker
+  rolled dice in the final combat round. Defaults to all but one of the
+  surviving attackers.
 
 ## Value
 
